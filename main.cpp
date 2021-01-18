@@ -83,6 +83,7 @@ int main()
     Text comWinText;
     comWinText.setFillColor(Color::White);
     comWinText.setOutlineColor(Color::Black);
+    comWinText.setOutlineThickness(5);
     comWinText.setPosition(SWIDTH / 2, SHEIGHT / 2);
     comWinText.setFont(font);
     comWinText.setCharacterSize(50);
@@ -107,6 +108,11 @@ int main()
 
     auto reset = [&]()
     {
+        cards = deque<Card>();
+        playerHand = list<Card>();
+        computerHand = list<Card>();
+        garbage = deque<Card>();
+
         for (int p = 0; p < 3;p++)
         {
             for (int n = 1; n < 14;n++)

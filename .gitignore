@@ -342,3 +342,7 @@ healthchecksdb
 ConnectionIii-Rj3W.hpp
 
 *.dll
+
+*.png
+
+texture.hpp

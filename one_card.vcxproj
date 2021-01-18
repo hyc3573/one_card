@@ -146,10 +146,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="Card.cpp" />
+    <ClCompile Include="computer.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="Card.h" />
+    <ClInclude Include="computer.h" />
     <ClInclude Include="ConnectionIii-Rj3W.hpp" />
+    <ClInclude Include="consts.h" />
+    <ClInclude Include="texture.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

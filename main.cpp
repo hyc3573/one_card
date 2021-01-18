@@ -128,6 +128,7 @@ int main()
 
         cards.front().flip();
         garbage.push_front(cards.front());
+        cards.pop_front();
 
         playerTurn = true;
 
@@ -140,7 +141,7 @@ int main()
     auto drawCard = [&](Card card)
     {
         auto content = card.getContents();
-        sprite.setTextureRect(IntRect(CMWIDTH + CTWIDTH * (static_cast<int>(content.second) - 1), CMHEIGHT + CTHEIGHT * static_cast<int>(content.first), CTWIDTH, CTHEIGHT));
+        sprite.setTextureRect(IntRect(CMWIDTH + CTWIDTH * (static_cast<int>(content.second) - 1), CMHEIGHT + CTHEIGHT * (3 - static_cast<int>(content.first)), CTWIDTH, CTHEIGHT));
         window.draw(sprite);
     };
 
@@ -333,7 +334,6 @@ int main()
             auto cSelection = draw(computerHand, garbage.front());
             if (cSelection == emptyCard)
             {
-                cards.front().flip();
                 computerHand.push_back(cards.front());
                 cards.pop_front();
             }

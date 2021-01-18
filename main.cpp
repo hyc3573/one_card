@@ -12,6 +12,7 @@
 #include <iterator>
 #include "computer.h"
 #include "texture.hpp"
+#include "ConnectionIii-Rj3W.hpp"
 
 typedef int Square;
 
@@ -21,7 +22,7 @@ using namespace sf;
 vector<float> distribute(int count, float interval)
 {
     vector<float> result;
-    float first = -(count * interval * .5f);
+    float first = -(interval/2)*(count - 1);
     for (int i = 0;i < count;i++)
     {
         result.push_back(first + interval * i);
@@ -30,20 +31,8 @@ vector<float> distribute(int count, float interval)
     return result;
 }
 
-vector<float> getFanOrientation(int count)
-{
-    return distribute(count, FANORIINT);
-}
-
-vector<float> getFanOffset(int count)
-{
-    return distribute(count, FANOFFINT);
-}
-
 int main()
 {
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-
     srand(time(NULL));
 
     RenderWindow window(VideoMode(SWIDTH, SHEIGHT), L"¿øÄ«µå");
@@ -67,6 +56,9 @@ int main()
         cout << "Error!" << endl;
     }
 
+    Sprite sprite;
+    sprite.setTexture(texture);
+
     RectangleShape card(Vector2f(CWIDTH, CHEIGHT));
     card.setFillColor(Color::Red);
     card.setOrigin(card.getLocalBounds().width / 2, card.getLocalBounds().height);
@@ -79,6 +71,40 @@ int main()
 
     bool playerTurn;
 
+    random_device rd;
+    mt19937 g(rd());
+
+    Font font;
+    if (!font.loadFromMemory(ConnectionIii_Rj3W_otf, ConnectionIii_Rj3W_otf_len))
+    {
+        cout << "Error!" << endl;
+    }
+
+    Text comWinText;
+    comWinText.setFillColor(Color::White);
+    comWinText.setOutlineColor(Color::Black);
+    comWinText.setPosition(SWIDTH / 2, SHEIGHT / 2);
+    comWinText.setFont(font);
+    comWinText.setCharacterSize(50);
+    comWinText.setString(L"ezzzzzzzzzzzzzzzzz");
+    comWinText.setOrigin(comWinText.getLocalBounds().width / 2, comWinText.getLocalBounds().height / 2);
+
+    Text plyWinText(comWinText);
+    plyWinText.setString(L"Y u HaX?");
+    plyWinText.setOrigin(plyWinText.getLocalBounds().width / 2, plyWinText.getLocalBounds().height / 2);
+
+    bool playerWon;
+    bool computerWon;
+
+    Texture back;
+    if (!back.create(SWIDTH, SHEIGHT))
+    {
+        cout << "Error!" << endl;
+    }
+
+    RectangleShape backside(Vector2f(CTWIDTH, CTHEIGHT));
+    backside.setFillColor(Color::Blue);
+
     auto reset = [&]()
     {
         for (int p = 0; p < 3;p++)
@@ -88,7 +114,7 @@ int main()
                 cards.push_front(Card(static_cast<Pattern>(p), static_cast<Number>(n)));
             }
         }
-        shuffle(cards.begin(), cards.end(), default_random_engine(seed));
+        shuffle(cards.begin(), cards.end(), g);
 
         for (int i = 0;i < CARDCNT;i++)
         {
@@ -106,7 +132,127 @@ int main()
         playerTurn = true;
 
         selection = playerHand.begin();
+
+        playerWon = false;
+        computerWon = false;
     };
+
+    auto drawCard = [&](Card card)
+    {
+        auto content = card.getContents();
+        sprite.setTextureRect(IntRect(CMWIDTH + CTWIDTH * (static_cast<int>(content.second) - 1), CMHEIGHT + CTHEIGHT * static_cast<int>(content.first), CTWIDTH, CTHEIGHT));
+        window.draw(sprite);
+    };
+
+    auto checkEmpty = [&]()
+    {
+        if (cards.empty())
+        {
+            for (int i = 0;i < garbage.size() - 1;i++)
+            {
+                cards.push_front(garbage.back());
+                garbage.pop_back();
+            }
+            shuffle(cards.begin(), cards.end(), g);
+        }
+    };
+
+    auto drawHands = [&](list<Card>& hand, bool popup, float Y)
+    {
+        auto offsets = distribute(hand.size(), CTWIDTH + OFFSET);
+
+        auto currentCard = hand.begin();
+        for (int i = 0;i < hand.size();i++)
+        {
+            if (currentCard->isFacedFront())
+            {
+                sprite.setPosition((SWIDTH - CTWIDTH) / 2 + offsets[i], Y);
+
+                if (popup && (currentCard == selection))
+                {
+                    sprite.move(0, -OFFSET);
+                }
+
+                drawCard(*currentCard);
+            }
+            else
+            {
+                backside.setPosition((SWIDTH - CTWIDTH) / 2 + offsets[i], Y);
+                window.draw(backside);
+            }
+            currentCard++;
+        }
+    };
+
+    auto playerWonScreen = [&]()
+    {
+        back.update(window);
+        Sprite sprite(back);
+
+        while (window.isOpen())
+        {
+            while (window.pollEvent(event))
+            {
+                switch (event.type)
+                {
+                case Event::Closed:
+                    window.close();
+                    break;
+                case Event::KeyPressed:
+                    switch (event.key.code)
+                    {
+                    case Keyboard::R:
+                        return;
+                        break;
+                    }
+                    break;
+                }
+            }
+
+            window.clear();
+
+            window.draw(sprite);
+            window.draw(plyWinText);
+
+            window.display();
+        }
+    };
+
+    auto computerWonScreen = [&]()
+    {
+        back.update(window);
+        Sprite sprite(back);
+
+        while (window.isOpen())
+        {
+            while (window.pollEvent(event))
+            {
+                switch (event.type)
+                {
+                case Event::Closed:
+                    window.close();
+                    break;
+                case Event::KeyPressed:
+                    switch (event.key.code)
+                    {
+                    case Keyboard::R:
+                        return;
+                        break;
+                    }
+                    break;
+                }
+            }
+
+            window.clear();
+
+            window.draw(sprite);
+            window.draw(comWinText);
+
+            window.display();
+        }
+    };
+
+    restart:
 
     reset();
 
@@ -168,10 +314,11 @@ int main()
                             garbage.push_front(*selection);
                             playerHand.erase(selection);
                             selection = playerHand.begin();
+                            playerTurn = !playerTurn;
                         }
                         if (playerHand.empty())
                         {
-
+                            playerWon = true;
                         }
                     }
                 }
@@ -179,45 +326,55 @@ int main()
             }
         }
 
+        checkEmpty();
+
         if (!playerTurn)
         {
+            auto cSelection = draw(computerHand, garbage.front());
+            if (cSelection == emptyCard)
+            {
+                cards.front().flip();
+                computerHand.push_back(cards.front());
+                cards.pop_front();
+            }
+
+            for (auto i = computerHand.begin();i != computerHand.end();i++)
+            {
+                if (*i == cSelection)
+                {
+                    garbage.push_front(*i);
+                    computerHand.erase(i);
+                    break;
+                }
+            }
+            playerTurn = !playerTurn;
+
             if (computerHand.empty())
             {
-
-            }
-            else
-            {
-                auto selection = draw(computerHand, garbage.front());
-                if (selection == computerHand.end())
-                {
-                    cards.front().flip();
-                    computerHand.push_back(cards.front());
-                    cards.pop_front();
-                    playerTurn = !playerTurn;
-                }
-
-                if (selection->matchesWith(garbage.front()))
-                {
-                    garbage.push_front(*selection);
-                    computerHand.erase(selection);
-                    selection = playerHand.begin();
-                }
+                computerWon = true;
             }
         }
 
-        if (cards.empty())
-        {
-            for (int i = 0;i < garbage.size() - 1;i++)
-            {
-                cards.push_front(garbage.back());
-                garbage.pop_back();
-            }
-            shuffle(cards.begin(), cards.end(), default_random_engine(seed));
-        }
+        checkEmpty();
 
         window.clear();
 
-        
+        sprite.setPosition((SWIDTH - CTWIDTH) / 2, (SHEIGHT - CTHEIGHT) / 2);
+        drawCard(garbage.front());
+
+        drawHands(playerHand, true, SHEIGHT - OFFSET - CTHEIGHT);
+        drawHands(computerHand, false, OFFSET + CTHEIGHT);
+
+        if (playerWon)
+        {
+            playerWonScreen();
+            goto restart;
+        }
+        if (computerWon)
+        {
+            computerWonScreen();
+            goto restart;
+        }
 
         window.display();
     }

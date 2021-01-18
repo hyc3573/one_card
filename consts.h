@@ -6,17 +6,16 @@
 
 #define CARDCNT 6
 
-#define FANORIINT 15.f
-#define FANOFFINT 10.f
-
 #define CWIDTH 200
 #define CHEIGHT 336
 
 #define CTWIDTH 52
 #define CTHEIGHT 76
-#define CMWIDTH 5
-#define CMHEIGHT 21
+#define CMWIDTH 4
+#define CMHEIGHT 20
 
 const float CPOPHGT = CHEIGHT / 4;
+
+const float OFFSET = 20;
 
 #endif

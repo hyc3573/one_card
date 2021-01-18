@@ -8,6 +8,6 @@
 
 using namespace std;
 
-list<Card>::iterator draw(list<Card>& hand, Card garbage);
+Card draw(list<Card>& hand, Card garbage);
 
 #endif

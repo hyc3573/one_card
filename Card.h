@@ -6,8 +6,8 @@
 
 using namespace std;
 
-typedef enum class Pattern { Spade = 0, Heart, Diamond, Club } Pattern;
-typedef enum class Number { Ace = 1, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King } Number;
+typedef enum class Pattern { null = -1, Spade = 0, Heart, Diamond, Club } Pattern;
+typedef enum class Number { null = -1, Ace = 1, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King } Number;
 typedef enum class Face { Back = 0, Front } Face;
 
 class Card
@@ -33,5 +33,7 @@ public:
 
 	pair<Pattern, Number> getContents() const;
 };
+
+const Card emptyCard(static_cast<Pattern>(-1), static_cast<Number>(-1));
 
 #endif

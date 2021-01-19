@@ -113,7 +113,7 @@ int main()
         computerHand = list<Card>();
         garbage = deque<Card>();
 
-        for (int p = 0; p < 3;p++)
+        for (int p = 0; p < 4;p++)
         {
             for (int n = 1; n < 14;n++)
             {
@@ -173,7 +173,7 @@ int main()
     auto getTextureRect = [&](Card card) -> IntRect
     {
         auto content = card.getContents();
-        return IntRect(CMWIDTH + CTWIDTH * (static_cast<int>(content.second) - 1), CMHEIGHT + CTHEIGHT * (3 - static_cast<int>(content.first)), CTWIDTH, CTHEIGHT);
+        return IntRect(CMWIDTH + CTWIDTH * (static_cast<int>(content.second) - 1), CMHEIGHT + CTHEIGHT * ((static_cast<int>(content.first) + 3)%4), CTWIDTH, CTHEIGHT);
     };
 
     auto drawCard = [&](Card card)

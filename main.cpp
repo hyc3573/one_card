@@ -144,10 +144,41 @@ int main()
         computerWon = false;
     };
 
-    auto drawCard = [&](Card card)
+    auto getYPos = [&](bool isPlayer) -> float
+    {
+        return isPlayer ? SHEIGHT - OFFSET - CTHEIGHT : OFFSET + CTHEIGHT;
+    };
+
+    auto getHandCardPos = [&](list<Card>& hand,int index, bool isPlayer, int count = -1) -> Vector2f
+    {
+        if (count == -1)
+        {
+            count = hand.size();
+        }
+
+        float offset = distribute(count, CTWIDTH + OFFSET)[index];
+        return Vector2f((SWIDTH - CTWIDTH) / 2 + offset, getYPos(isPlayer));
+    };
+
+    auto getGarbageCardPos = [&]() -> Vector2f
+    {
+        return Vector2f((SWIDTH - CTWIDTH) / 2, (SHEIGHT - CTHEIGHT) / 2);
+    };
+
+    auto getCardStackPos = [&]() -> Vector2f
+    {
+        return getGarbageCardPos() - Vector2f(OFFSET + CTWIDTH, 0);
+    };
+
+    auto getTextureRect = [&](Card card) -> IntRect
     {
         auto content = card.getContents();
-        sprite.setTextureRect(IntRect(CMWIDTH + CTWIDTH * (static_cast<int>(content.second) - 1), CMHEIGHT + CTHEIGHT * (3 - static_cast<int>(content.first)), CTWIDTH, CTHEIGHT));
+        return IntRect(CMWIDTH + CTWIDTH * (static_cast<int>(content.second) - 1), CMHEIGHT + CTHEIGHT * (3 - static_cast<int>(content.first)), CTWIDTH, CTHEIGHT);
+    };
+
+    auto drawCard = [&](Card card)
+    {
+        sprite.setTextureRect(getTextureRect(card));
         window.draw(sprite);
     };
 
@@ -157,6 +188,7 @@ int main()
         {
             for (int i = 0;i < garbage.size() - 1;i++)
             {
+                garbage.back().flip();
                 cards.push_front(garbage.back());
                 garbage.pop_back();
             }
@@ -164,7 +196,7 @@ int main()
         }
     };
 
-    auto drawHands = [&](list<Card>& hand, bool popup, float Y)
+    auto drawHands = [&](list<Card>& hand, bool popup, bool isPlayer)
     {
         auto offsets = distribute(hand.size(), CTWIDTH + OFFSET);
 
@@ -173,7 +205,7 @@ int main()
         {
             if (currentCard->isFacedFront())
             {
-                sprite.setPosition((SWIDTH - CTWIDTH) / 2 + offsets[i], Y);
+                sprite.setPosition(getHandCardPos(hand, i, isPlayer));
 
                 if (popup && (currentCard == selection))
                 {
@@ -184,7 +216,7 @@ int main()
             }
             else
             {
-                backside.setPosition((SWIDTH - CTWIDTH) / 2 + offsets[i], Y);
+                backside.setPosition(getHandCardPos(hand, i, isPlayer));
                 window.draw(backside);
             }
             currentCard++;
@@ -259,6 +291,149 @@ int main()
         }
     };
 
+    auto drawAllHands = [&]()
+    {
+        drawHands(playerHand, true, true);
+        drawHands(computerHand, false, false);
+    };
+
+    auto drawGarbage = [&]()
+    {
+        sprite.setPosition(getGarbageCardPos());
+        drawCard(garbage.front());
+    };
+
+    auto drawCardStack = [&]()
+    {
+        backside.setPosition(getCardStackPos());
+        window.draw(backside);
+    };
+
+    auto drawAll = [&]()
+    {
+        drawGarbage();
+        drawCardStack();
+
+        drawAllHands();
+    };
+
+    auto popCard = [&](deque<Card>& cardStack, list<Card>& hand, list<Card>& opponentCard, bool flip)
+    {
+        window.clear();
+
+        drawGarbage();
+        drawCardStack();
+
+        drawHands(opponentCard, !flip, !flip);
+
+        if (flip)
+        {
+            cardStack.front().flip();
+        }
+        hand.push_back(cardStack.front());
+        cardStack.pop_front();
+
+        Animation ani(window);
+
+        vector<Sprite> sprites(hand.size(), sprite);
+        vector<RectangleShape> rects(hand.size(), backside);
+
+        auto iter = hand.begin();
+        for (int i = 0;i < hand.size() - 1;i++)
+        {
+            if (flip)
+            {
+                sprites[i].setTextureRect(getTextureRect(*iter));
+                sprites[i].setPosition(getHandCardPos(hand, i, flip, hand.size() - 1));
+                sprites[i].setTextureRect(getTextureRect(*iter));
+                ani.addTarget(AnimTarget(&sprites[i], sprites[i], getHandCardPos(hand, i, flip), speed, accel));
+            }
+            else
+            {
+                rects[i].setPosition(getHandCardPos(hand, i, flip, hand.size() - 1));
+                ani.addTarget(AnimTarget(&rects[i], rects[i], getHandCardPos(hand, i, flip), speed, accel));
+            }
+
+            iter++;
+        }
+
+        if (flip)
+        {
+            sprites.back().setPosition(getCardStackPos());
+            sprites.back().setTextureRect(getTextureRect(*iter));
+            ani.addTarget(AnimTarget(&sprites.back(), sprites.back(), getHandCardPos(hand, hand.size() - 1, flip), speed, accel));
+        }
+        else
+        {
+            rects.back().setPosition(getCardStackPos());
+            ani.addTarget(AnimTarget(&rects.back(), rects.back(), getHandCardPos(hand, hand.size() - 1, flip), speed, accel));
+        }
+
+        ani.start();
+        
+        playerTurn = !playerTurn;
+    };
+
+    auto drawCardTo = [&](list<Card>& hand, list<Card>& opponentCard, Card card, deque<Card> cardStack, bool flip, bool isPlayer)
+    {
+        window.clear();
+
+        drawGarbage();
+        drawCardStack();
+        drawHands(opponentCard, !isPlayer, !isPlayer);
+
+        Animation ani(window);
+
+        if (flip)
+        {
+            card.flip();
+        }
+
+        int index = 0;
+        for (auto i = hand.begin();i != hand.end();i++)
+        {
+            if (card == *i)
+            {
+                break;
+            }
+            index++;
+        }
+
+        Sprite spr(sprite);
+        spr.setPosition(getHandCardPos(hand, index, isPlayer));
+        spr.setTextureRect(getTextureRect(card));
+        ani.addTarget(AnimTarget(&spr, spr, getGarbageCardPos(), speed, accel));
+
+
+        
+
+        hand.remove(card);
+        cardStack.push_front(card);
+
+        vector<Sprite> sprites(hand.size(), sprite);
+        vector<RectangleShape> rects(hand.size(), backside);
+        auto carditer = hand.begin();
+        for (int i = 0;i < hand.size();i++)
+        {
+            if (flip)
+            {
+                sprites[i].setPosition(getHandCardPos(hand, i, isPlayer, hand.size()+1));
+                sprites[i].setTextureRect(getTextureRect(*carditer));
+                ani.addTarget(AnimTarget(&sprites[i], sprites[i], getHandCardPos(hand, i, isPlayer), speed, accel));
+            }
+            else
+            {
+                rects[i].setPosition(getHandCardPos(hand, i, isPlayer, hand.size() + 1));
+                ani.addTarget(AnimTarget(&rects[i], rects[i], getHandCardPos(hand, i, isPlayer), speed, accel));
+            }
+            carditer++;
+        }
+
+        ani.start();
+
+        playerTurn = !playerTurn;
+    };
+
     restart:
 
     reset();
@@ -306,10 +481,8 @@ int main()
 
                     if (noDrawble)
                     {
-                        cards.front().flip();
-                        playerHand.push_back(cards.front());
-                        cards.pop_front();
-                        playerTurn = !playerTurn;
+                        popCard(cards, playerHand, computerHand, true);
+                        selection = playerHand.begin();
                     }
                 }
                     break;
@@ -318,10 +491,8 @@ int main()
                     {
                         if (selection->matchesWith(garbage.front()))
                         {
-                            garbage.push_front(*selection);
-                            playerHand.erase(selection);
+                            drawCardTo(playerHand, computerHand, *selection, garbage, true, true);
                             selection = playerHand.begin();
-                            playerTurn = !playerTurn;
                         }
                         if (playerHand.empty())
                         {
@@ -340,20 +511,12 @@ int main()
             auto cSelection = draw(computerHand, garbage.front());
             if (cSelection == emptyCard)
             {
-                computerHand.push_back(cards.front());
-                cards.pop_front();
+                popCard(cards, computerHand, playerHand, false);
             }
-
-            for (auto i = computerHand.begin();i != computerHand.end();i++)
+            else
             {
-                if (*i == cSelection)
-                {
-                    garbage.push_front(*i);
-                    computerHand.erase(i);
-                    break;
-                }
+                drawCardTo(computerHand, playerHand, cSelection, garbage, false, false );
             }
-            playerTurn = !playerTurn;
 
             if (computerHand.empty())
             {
@@ -365,11 +528,7 @@ int main()
 
         window.clear();
 
-        sprite.setPosition((SWIDTH - CTWIDTH) / 2, (SHEIGHT - CTHEIGHT) / 2);
-        drawCard(garbage.front());
-
-        drawHands(playerHand, true, SHEIGHT - OFFSET - CTHEIGHT);
-        drawHands(computerHand, false, OFFSET + CTHEIGHT);
+        drawAll();
 
         if (playerWon)
         {

@@ -18,4 +18,7 @@ const float CPOPHGT = CHEIGHT / 4;
 
 const float OFFSET = 20;
 
+const float speed = 1000;
+const float accel = 800;
+
 #endif

@@ -374,7 +374,7 @@ int main()
         playerTurn = !playerTurn;
     };
 
-    auto drawCardTo = [&](list<Card>& hand, list<Card>& opponentCard, Card card, deque<Card> cardStack, bool flip, bool isPlayer)
+    auto drawCardTo = [&](list<Card>& hand, list<Card>& opponentCard, Card card, deque<Card>& cardStack, bool flip, bool isPlayer)
     {
         window.clear();
 
@@ -411,9 +411,9 @@ int main()
         auto carditer = hand.begin();
         for (int i = 0;i < hand.size();i++)
         {
-            if (flip)
+            if (!flip)
             {
-                sprites[i].setPosition(getHandCardPos(hand, i, isPlayer, hand.size()+1));
+                sprites[i].setPosition(getHandCardPos(hand, (i < index) ? i : i + 1, isPlayer, hand.size() + 1));
                 sprites[i].setTextureRect(getTextureRect(*carditer));
                 ani.addTarget(AnimTarget(&sprites[i], sprites[i], getHandCardPos(hand, i, isPlayer), speed, accel));
             }
@@ -489,7 +489,7 @@ int main()
                     {
                         if (selection->matchesWith(garbage.front()))
                         {
-                            drawCardTo(playerHand, computerHand, *selection, garbage, true, true);
+                            drawCardTo(playerHand, computerHand, *selection, garbage, false, true);
                             selection = playerHand.begin();
                         }
                         if (playerHand.empty())
@@ -504,7 +504,7 @@ int main()
 
         checkEmpty();
 
-        if (!playerTurn)
+        if (!(playerTurn || playerWon))
         {
             auto cSelection = draw(computerHand, garbage.front());
             if (cSelection == emptyCard)
@@ -513,7 +513,7 @@ int main()
             }
             else
             {
-                drawCardTo(computerHand, playerHand, cSelection, garbage, false, false );
+                drawCardTo(computerHand, playerHand, cSelection, garbage, true, false );
             }
 
             if (computerHand.empty())

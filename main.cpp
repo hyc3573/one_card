@@ -402,10 +402,6 @@ int main()
         Sprite spr(sprite);
         spr.setPosition(getHandCardPos(hand, index, isPlayer));
         spr.setTextureRect(getTextureRect(card));
-        ani.addTarget(AnimTarget(&spr, spr, getGarbageCardPos(), speed, accel));
-
-
-        
 
         hand.remove(card);
         cardStack.push_front(card);
@@ -428,6 +424,8 @@ int main()
             }
             carditer++;
         }
+
+        ani.addTarget(AnimTarget(&spr, spr, getGarbageCardPos(), speed, accel));
 
         ani.start();
 
